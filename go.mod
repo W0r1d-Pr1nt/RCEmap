@@ -1,4 +1,4 @@
-module rcemap
+module RCEmap
 
 go 1.22.1
 
