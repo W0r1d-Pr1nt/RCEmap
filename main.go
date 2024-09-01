@@ -18,7 +18,11 @@ import (
 var topWindow fyne.Window
 
 // var swi *widget.RadioGroup
+var RW string
 var sel *widget.Select
+var blackleixing string
+var guolvleixing string
+var choose string
 
 func init() {
 	//设置中文字体
@@ -102,9 +106,7 @@ func main() {
 			URLentry := widget.NewEntry()
 			URLentry.SetPlaceHolder("请输入url(如https://www.baidu.com)")
 
-			PORTentry := widget.NewEntry()
-			PORTentry.SetPlaceHolder("请输入端口(如:80,且80或443一定要输入,这里不会默认,一定要加':')")
-			//前两个是必备条件,url和端口的设置
+			//是必备条件,url的设置
 
 			/*
 				autoContent自动模式容器
@@ -115,6 +117,9 @@ func main() {
 			canshu := widget.NewEntry()
 			canshu.SetPlaceHolder("请输入参数点")
 
+			xieru := widget.NewEntry()
+			xieru.SetPlaceHolder("当需要第二个参数时,请写在这里,不然请为空")
+
 			command := widget.NewEntry()
 			command.SetPlaceHolder("请输入要执行的命令")
 
@@ -124,12 +129,14 @@ func main() {
 			//选GET之后弹出来的容器
 			GET := container.NewVBox(
 				canshu,
+				xieru,
 				command,
 			)
 
 			//选POST之后弹出来的容器
 			POST := container.NewVBox(
 				canshu,
+				xieru,
 				command,
 			)
 
@@ -185,9 +192,9 @@ func main() {
 			var label *widget.Label
 
 			guolventry := widget.NewEntry()
-			guolventry.SetPlaceHolder("请在此输入过滤")
+			guolventry.SetPlaceHolder("请在此输入过滤(直接复制正则)")
 
-			sel = widget.NewSelect([]string{"无数字字母RCE", "黑名单绕过", "少量字符RCE", "环境变量构造"}, func(value string) {
+			sel = widget.NewSelect([]string{"无数字字母RCE", "黑名单绕过", "少量字符RCE", "环境变量构造", "preg_replace/e的利用", "伪协议"}, func(value string) {
 				manualContentBox.Objects = nil
 				label = widget.NewLabel("")
 
@@ -199,7 +206,7 @@ func main() {
 
 					label = widget.NewLabel("Tips:当过滤了$时请选择进阶")
 
-					sele = widget.NewSelect([]string{"自增", "异或", "ff", "进阶"}, func(m string) {
+					sele = widget.NewSelect([]string{"自增", "异或", "或", "ff", "进阶", "限制字符种类(固定)", "限制字符种类(自定义)"}, func(m string) {
 						switch m {
 
 						case "自增":
@@ -210,6 +217,10 @@ func main() {
 
 							exploit = "xor"
 
+						case "或":
+
+							exploit = "or"
+
 						case "ff":
 
 							exploit = "ff"
@@ -217,6 +228,16 @@ func main() {
 						case "进阶":
 
 							exploit = "进阶"
+
+						case "限制字符种类(固定)":
+
+							choose = "guding"
+							exploit = "进阶plus"
+
+						case "限制字符种类(自定义)":
+
+							choose = "zidingyi"
+							exploit = "进阶plus"
 						}
 					})
 
@@ -241,24 +262,78 @@ func main() {
 					})
 
 					four2one = container.NewVBox(label, radio, radiocontent)
-
 				case "黑名单绕过":
 
-					label = widget.NewLabel("这是黑名单绕过")
+					es := widget.NewRadioGroup([]string{"eval", "system"}, func(ti string) {
+
+						switch ti {
+						case "eval":
+							guolvleixing = "e"
+						case "system":
+							guolvleixing = "s"
+
+						}
+
+					})
+
+					//one2content := container.NewVBox()
+					one23 := widget.NewSelect([]string{"用户传命令执行", "执行固定逻辑", "根据输入的过滤回显出可用的函数自行执行"}, func(ti string) {
+						switch ti {
+						case "用户传命令执行":
+							blackleixing = "chuan"
+
+						case "执行固定逻辑":
+							blackleixing = "guding"
+
+						case "根据输入的过滤回显出可用的函数自行执行":
+							blackleixing = "shoudong"
+						}
+					})
+
+					one23.PlaceHolder = "请选择一种方法"
+
+					four2one = container.NewVBox(
+
+						es,
+						one23,
+						//one2content,
+					)
+					exploit = "black"
 
 				case "少量字符RCE":
 
 					label = widget.NewLabel("这是少量字符RCE")
+					exploit = "Fewchar"
 
 				case "环境变量构造":
 
 					label = widget.NewLabel("这是环境变量构造")
+					exploit = "pwd"
 
+				case "preg_replace/e的利用":
+
+					exploit = "replace"
+
+				case "伪协议":
+
+					exploit = "file_put"
+					radi := widget.NewRadioGroup([]string{"写入", "读取", "请在前两个都无法执行的时候选择这个,如果这个也无效则是无效"}, func(value string) {
+						switch value {
+						case "写入":
+							RW = "write"
+						case "读取":
+							RW = "read"
+						case "请在前两个都无法执行的时候选择这个,如果这个也无效则是无效":
+							RW = "plus"
+						}
+					})
+
+					four2one = container.NewVBox(radi)
 				}
 
 				manualContentBox.Objects = []fyne.CanvasObject{
 
-					four2one,
+					four2one, //这里的four2one是在上面sel里面选择过后下面会出现的容器,直接在各case里面赋值就可以
 				}
 				manualContentBox.Refresh()
 
@@ -266,8 +341,12 @@ func main() {
 
 			sel.PlaceHolder = "请选择一种题型"
 
-			manualContent := container.NewVBox(
-				widget.NewLabel("手动模式"),
+			manualContent := container.NewVBox( //手动模式
+				canshu,
+				xieru,
+				command,
+				automethodradio,
+				phpVersion,
 				guolventry,
 				sel,
 				manualContentBox,
@@ -305,13 +384,13 @@ func main() {
 
 			// 按钮,主要功能区
 			button := widget.NewButton("START", func() {
-				URL := URLentry.Text + PORTentry.Text
-				huixianlabel.SetText("访问URL+端口为: " + URL) // 更新回显标签的文本
+				URL := URLentry.Text
+				huixianlabel.SetText("访问URL为: " + URL) // 更新回显标签的文本
 
 				if rrraaadio == "自动模式" {
 
 					jianjie := `自动模式
-请求模式为` + getpost1 + "\n访问URL+端口为: " + URL + "\nphp版本为" + Version
+请求模式为` + getpost1 + "\n访问URL为: " + URL + "\nphp版本为" + Version
 
 					if canshu.Text == "" {
 						huixianlabel.SetText(jianjie + "\n请输入全部参数")
@@ -325,7 +404,7 @@ func main() {
 				} else if rrraaadio == "手动模式" {
 
 					jianjie := `手动模式
-请求模式为` + getpost1 + "\n访问URL+端口为: " + URL + "\nphp版本为" + Version
+请求模式为` + getpost1 + "\n访问URL为: " + URL + "\nphp版本为" + Version
 
 					guolv := guolventry.Text
 
@@ -339,7 +418,7 @@ func main() {
 
 						case "zizeng":
 
-							script.Zizeng(URL, command.Text, canshu.Text, newlabel)
+							script.Zizeng(URL, command.Text, canshu.Text, getpost1, newlabel)
 
 						case "xor":
 
@@ -356,18 +435,6 @@ func main() {
 							booL := "0"
 							script.Bashfuck(URL, command.Text, guolv, canshu.Text, getpost1, newlabel, booL)
 
-						case "black":
-
-							//黑名单
-
-						case "pwd":
-
-							//环境变量
-
-						case "Fewchar":
-
-							//少字符
-
 						}
 
 					} else {
@@ -376,30 +443,97 @@ func main() {
 
 						switch exploit {
 
+						case "or":
+
+							script.Or(URL, command.Text, canshu.Text, newlabel, guolv, getpost1)
+
 						case "进阶":
 
 							script.Noshuzievaljinjie(URL, command.Text, Version, canshu.Text, getpost1, guolv, newlabel)
 
-						case "Fewchar":
+						case "进阶plus":
+
+							script.Xorplus(URL, canshu.Text, getpost1, choose, newlabel)
+
+						}
+					}
+
+					switch exploit {
+
+					case "black":
+						//黑名单
+						com, char := script.Blacktest(guolv, guolvleixing)
+						//com是所有可用的命令,char是所有可用的字符
+
+						if blackleixing == "chuan" {
+
+							result := script.Blackchuan(guolv, command.Text, com, char)
+							newlabel.SetText(result)
+
+						} else if blackleixing == "guding" {
+
+							result := script.Blackguding(URLentry.Text, canshu.Text, getpost1, guolvleixing, com, char, guolv)
+							newlabel.SetText(result)
+
+						} else if blackleixing == "shoudong" {
+
+							result := script.Blackshoudong(com, char)
+							newlabel.SetText(result + `
+下面是这些符号的各自用法(命令我就不写了你自己查一下吧):
+
+$ - 标示变量、命令替换和参数 例如: echo $HOME  # 输出 HOME 变量的值  或者  echo $(date)  # 命令替换，输出当前日期
+* - 通配符,例如f*会匹配一切f开头的文件
+? - 通配符,例如f???可匹配f开头四个字的文件,例如flag
+&& - 逻辑与，前一命令成功时执行下一命令
+|| - 逻辑或，前一命令失败时执行下一命令
+; - 命令分隔符
+| - 管道，将前一个命令的输出作为下一个命令的输入
+> - 重定向输出到文件（覆盖）
+>> - 重定向输出到文件（追加)
+[] - 字符类，匹配括号内的任意一个字符 例如: ls file[1-3].txt  # 匹配 file1.txt, file2.txt, file3.txt
+{} - 扩展符，用于生成多个字符串 例如: echo {A,B,C}  # 输出 A B C  或者  echo {1..3}   # 输出 1 2 3
+() - 命令组，创建子 Shell 执行命令
+$() - 命令替换
+$[] - 算术扩展  例如: echo $((1 + 2))
+$0 - 当前脚本名
+%0a,%09,{$IFS},$IFS$9,%0d - 可替代空格
+反引号 - 可替代命令
+`)
 
 						}
 
+					case "pwd":
+
+						result := script.Pwd(URLentry.Text, canshu.Text, getpost1, command.Text)
+						newlabel.SetText(result)
+
+					case "Fewchar":
+						result := script.Fewchar()
+						newlabel.SetText(result)
+
+					case "replace":
+						result := script.Replace(URL, canshu.Text, getpost1, command.Text)
+						newlabel.SetText(result)
+					case "file_put":
+						result := script.Weixieyi(URL, guolv, canshu.Text, getpost1, command.Text, RW, xieru.Text)
+						newlabel.SetText(result)
 					}
+
 				}
 
 			})
 
 			mainContent := container.NewVBox(
 				URLentry,
-				PORTentry,
 				modeRadio,
 				phpContent,
 			)
 
-			huixianscroll := container.NewScroll(huixian) //给回显区加个滚动
+			mainscroll := container.NewScroll(mainContent) //给主部分加滚动
+			huixianscroll := container.NewScroll(huixian)  //给回显区加个滚动
 
 			//mainsplit是中间容器上下分割
-			mainsplit := container.NewVSplit(mainContent, huixianscroll)
+			mainsplit := container.NewVSplit(mainscroll, huixianscroll)
 			mainsplit.Offset = 0.8
 
 			//phpsplit是php部分右侧content与button的分割线
@@ -420,9 +554,9 @@ func main() {
 
 	//themes是list下面的设置字体大小按钮
 
-	fontSizeLabel := widget.NewLabel("字体大小: " + fmt.Sprintf("%.0f", customTheme.textSize))
+	fontSizeLabel := widget.NewLabel("字体大小: " + fmt.Sprintf("%.0f", customTheme.textSize)) //显示当前字体大小
 
-	themes := container.NewGridWithColumns(2,
+	themes := container.NewGridWithColumns(2, //设置两个按钮
 
 		widget.NewButtonWithIcon("", theme.NavigateBackIcon(), func() {
 			customTheme.textSize -= 1

