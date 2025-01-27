@@ -2,17 +2,18 @@ package main
 
 import (
 	"fmt"
-	"image/color"
-	"os"
-	"rcemap/script"
-	"strings"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/flopp/go-findfont"
+	"image/color"
+	"os"
+	"rcemap/script"
+	"runtime"
+	"strings"
+	"time"
 )
 
 var topWindow fyne.Window
@@ -25,15 +26,35 @@ var guolvleixing string
 var choose string
 
 func init() {
-	//设置中文字体
+	// 获取系统上的所有字体路径
 	fontPaths := findfont.List()
-	for _, path := range fontPaths {
-		if strings.Contains(path, "msyhbd.ttf") || strings.Contains(path, "simhei.ttf") || strings.Contains(path, "simsun.ttc") || strings.Contains(path, "simkai.ttf") || strings.Contains(path, "simfang.ttf") {
-			err := os.Setenv("FYNE_FONT", path)
-			if err != nil {
-				return
+
+	// 判断操作系统类型
+	switch runtime.GOOS {
+	case "windows":
+		// 在 Windows 系统上查找常见的中文字体
+		for _, path := range fontPaths {
+			if strings.Contains(path, "msyhbd.ttf") || strings.Contains(path, "simhei.ttf") || strings.Contains(path, "simsun.ttc") || strings.Contains(path, "simkai.ttf") || strings.Contains(path, "simfang.ttf") {
+				// 设置字体
+				err := os.Setenv("FYNE_FONT", path)
+				if err != nil {
+					return
+				}
+				break
 			}
-			break
+		}
+
+	case "linux":
+		// 在 Linux 系统上查找常见的中文字体（比如 WenQuanYi 或 Noto Sans CJK）
+		for _, path := range fontPaths {
+			if strings.Contains(path, "wqy-microhei.ttc") || strings.Contains(path, "NotoSansCJK-Regular.ttc") || strings.Contains(path, "wqy-zenhei.ttc") {
+				// 设置字体
+				err := os.Setenv("FYNE_FONT", path)
+				if err != nil {
+					return
+				}
+				break
+			}
 		}
 	}
 }
@@ -69,6 +90,21 @@ custom部分是自定义主题
 
 最顶上的var是全局变量省事就放最上面了
 */
+
+func showPopup(app fyne.App, mess string) {
+	// 创建一个新的窗口作为弹窗
+	popup := app.NewWindow("复制结果")
+	popup.SetContent(widget.NewLabel(mess))
+	popup.Resize(fyne.NewSize(100, 30))
+	popup.CenterOnScreen()
+	popup.Show()
+
+	// 延迟关闭窗口
+	go func() {
+		time.Sleep(1 * time.Second) // 停留一秒
+		popup.Close()               // 关闭弹窗
+	}()
+}
 
 func main() {
 
@@ -194,7 +230,7 @@ func main() {
 			guolventry := widget.NewEntry()
 			guolventry.SetPlaceHolder("请在此输入过滤(直接复制正则)")
 
-			sel = widget.NewSelect([]string{"无数字字母RCE", "黑名单绕过", "少量字符RCE", "环境变量构造", "preg_replace/e的利用", "伪协议"}, func(value string) {
+			sel = widget.NewSelect([]string{"无数字字母RCE", "黑名单绕过", "少量字符RCE", "环境变量构造(无flag试试网站里手动输入poc)", "preg_replace/e的利用", "伪协议"}, func(value string) {
 				manualContentBox.Objects = nil
 				label = widget.NewLabel("")
 
@@ -305,7 +341,7 @@ func main() {
 					label = widget.NewLabel("这是少量字符RCE")
 					exploit = "Fewchar"
 
-				case "环境变量构造":
+				case "环境变量构造(无flag试试网站里手动输入poc)":
 
 					label = widget.NewLabel("这是环境变量构造")
 					exploit = "pwd"
@@ -383,7 +419,7 @@ func main() {
 			)
 
 			// 按钮,主要功能区
-			button := widget.NewButton("START", func() {
+			start := widget.NewButton("START", func() {
 				URL := URLentry.Text
 				huixianlabel.SetText("访问URL为: " + URL) // 更新回显标签的文本
 
@@ -522,6 +558,24 @@ $0 - 当前脚本名
 				}
 
 			})
+
+			fuzhi := widget.NewButton("复制结果", func() {
+
+				clipboard := w.Clipboard()
+
+				if newlabel.Text == "" {
+
+					showPopup(a, "复制结果为空，复制失败")
+
+				} else {
+
+					showPopup(a, "复制成功！")
+					clipboard.SetContent(newlabel.Text)
+
+				}
+			})
+
+			button := container.NewBorder(nil, fuzhi, nil, nil, start)
 
 			mainContent := container.NewVBox(
 				URLentry,

